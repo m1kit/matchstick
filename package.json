@@ -10,11 +10,12 @@
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
     "build": "node build/build.js",
-    "deploy": "node ./node_modules/vue-gh-pages/index.js"
+    "deploy": "node ./node_modules/vue-gh-pages/index.js --branch gh-pages"
   },
   "dependencies": {
+    "bulma": "^0.7.2",
     "vue": "^2.5.2",
-    "bulma": "^0.7.2"
+    "vue2vis": "^0.0.16"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

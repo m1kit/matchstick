@@ -12,6 +12,9 @@
         </td>
       </tr>
     </table>
+    <network :nodes="network.nodes"
+             :edges="network.edges"
+             :options="network.options"></network>
     <div v-if="winner!==null" class="modal is-active">
       <div class="modal-background"></div>
       <div class="modal-card">
@@ -31,10 +34,37 @@
 </template>
 
 <script>
+import Network from 'vue2vis/src/components/Network'
+
 export default {
   name: 'HelloWorld',
+  components: {Network},
   data () {
     return {
+      network: {
+        nodes: [
+          { id: 1, label: 'Node 1' },
+          { id: 2, label: 'Node 2' },
+          { id: 3, label: 'Node 3' },
+          { id: 4, label: 'Node 4' },
+          { id: 5, label: 'Node 5' }
+        ],
+        edges: [
+          { id: 1, from: 1, to: 3 },
+          { id: 2, from: 1, to: 2 },
+          { id: 3, from: 2, to: 4 },
+          { id: 4, from: 2, to: 5 },
+          { id: 5, from: 3, to: 3 }
+        ],
+        options: {
+          nodes: {
+            shape: 'circle'
+          },
+          layout: {
+            hierarchical: true
+          }
+        }
+      },
       cpu: true,
       turn: 0,
       board: [[1, 1], [1, 1]],
@@ -982,7 +1012,7 @@ export default {
   },
   methods: {
     click: function (player, hand, byuser) {
-      if (byuser && this.turn === 1) {
+      if (this.cpu && byuser && this.turn === 1) {
         return
       }
       if (this.selected === null) {
@@ -992,14 +1022,13 @@ export default {
         this.selected = hand
       } else {
         if ((this.turn === player && this.selected === hand) || this.board[player][hand] === 0) {
-          console.log('FF')
           return
         }
         this.board[player][hand] += this.board[this.turn][this.selected]
         this.board[player][hand] %= 5
         if (this.board[player][0] === 0 && this.board[player][1] === 0) {
           if (this.cpu) {
-            this.winner = (player === 0 ? 'プレイヤー' : 'AI')
+            this.winner = (player === 0 ? 'AI' : 'プレイヤー')
           } else {
             this.winner = 'プレイヤー' + (player ^ 1)
           }
@@ -1017,42 +1046,42 @@ export default {
         return
       }
       let map = {}
-      const base = [0, this.board[0][0], this.board[0][1], this.board[1][0], this.board[1][1]]
       for (let i in [0, 1]) {
         if (this.board[1][i] === 0) {
           continue
         }
         if (this.board[1][i ^ 1] !== 0) {
-          const nb = base.concat()
-          nb[3 + (i ^ 1)] += this.board[1][i]
-          nb[3 + (i ^ 1)] %= 5
-          map[[i, 1, i ^ 1].join('')] = this.table[nb.join('')]
+          const nb0 = [0, this.board[0][0], this.board[0][1], this.board[1][0], this.board[1][1]]
+          nb0[3 + (i ^ 1)] += this.board[1][i]
+          nb0[3 + (i ^ 1)] %= 5
+          map[[i, 1, i ^ 1].join('')] = this.table[nb0.slice(0, 5).join('')]
         }
         for (let j in [0, 1]) {
           if (this.board[0][j] === 0) {
             continue
           }
-          const nb = base.concat()
-          nb[1 + j] += this.board[1][i]
-          nb[1 + j] %= 5
-          map[[i, 0, j].join('')] = this.table[nb.join('')]
+          const nb1 = [0, this.board[0][0], this.board[0][1], this.board[1][0], this.board[1][1]]
+          nb1[1 + j] += this.board[1][i]
+          nb1[1 + j] %= 5
+          map[[i, 0, j].join('')] = this.table[nb1.slice(0, 5).join('')]
         }
       }
       let choice = null
+      console.log(map)
       for (let c in map) {
-        if (choice === null) {
-          console.log('UP:' + c)
-          choice = c
-        } else if (map[c] === 1 || map[choice] === 0) {
-          console.log('UP:' + c)
-          choice = c
+        if (map.hasOwnProperty(c)) {
+          if (choice === null) {
+            choice = c
+          } else if (map[c] === 1 || map[choice] === 0) {
+            choice = c
+          }
         }
       }
       if (choice === null) {
         return
       }
       this.click(1, parseInt(choice[0]), false)
-      setTimeout(() => this.click(choice[1], choice[2], false), 1000)
+      setTimeout(() => this.click(parseInt(choice[1]), parseInt(choice[2]), false), 1000)
     }
   }
 }
@@ -1063,45 +1092,58 @@ export default {
   h1, h2 {
     font-weight: normal;
   }
+
   ul {
     list-style-type: none;
     padding: 0;
   }
+
   li {
     display: inline-block;
     margin: 0 10px;
   }
+
   a {
     color: #42b983;
   }
+
   html body {
     height: 100vh;
   }
+
   .board {
     margin: auto;
     width: 80%;
     height: 100%;
   }
+
   .hand {
     text-align: center;
     padding: 10px;
     font-size: 4rem;
   }
+
   .dead {
     color: lightslategray;
   }
+
   .user {
   }
+
   .ai {
   }
+
   .selected {
     -webkit-animation: 1s ease 0s alternate none infinite running shine;
     animation: 1s ease 0s alternate none infinite running shine;
   }
+
   .selectable {
+    cursor: pointer;
     -webkit-animation: 1s ease 0s alternate none infinite running notify;
     animation: 1s ease 0s alternate none infinite running notify;
   }
+
   @keyframes notify {
     0% {
       box-shadow: inset 0 0 0 gold;
@@ -1110,6 +1152,7 @@ export default {
       box-shadow: inset 0 0 2em gold;
     }
   }
+
   @keyframes shine {
     0% {
       box-shadow: inset 0 0 0 white;
